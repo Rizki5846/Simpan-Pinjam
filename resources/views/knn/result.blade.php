@@ -1,141 +1,114 @@
+<!-- resources/views/klasifikasi/result.blade.php -->
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h2>Hasil Klasifikasi KNN</h2>
-    
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5>Data yang Diklasifikasi</h5>
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-{{ $dataUji->prediksi_kelayakan == 'Layak' ? 'success' : 'danger' }} text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-poll me-2"></i>Hasil Klasifikasi
+            </h4>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <table class="table table-bordered">
-                        <tr>
-                            <th>NIK</th>
-                            <td>{{ $uji->nik }}</td>
-                        </tr>
-                        <tr>
-                            <th>Nama</th>
-                            <td>{{ $uji->nama }}</td>
-                        </tr>
-                        <tr>
-                            <th>Pekerjaan</th>
-                            <td>{{ $uji->pekerjaan }}</td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <table class="table table-bordered">
-                        <tr>
-                            <th>Penghasilan</th>
-                            <td>Rp {{ number_format($uji->penghasilan, 0, ',', '.') }}</td>
-                        </tr>
-                        <tr>
-                            <th>Tabungan</th>
-                            <td>Rp {{ number_format($uji->tabungan, 0, ',', '.') }}</td>
-                        </tr>
-                        <tr>
-                            <th>Pinjaman</th>
-                            <td>Rp {{ number_format($uji->pinjaman, 0, ',', '.') }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header bg-success text-white">
-            <h5>Hasil Prediksi</h5>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-{{ $predictedStatus == 'Layak' ? 'success' : 'danger' }}">
-                <h4 class="alert-heading">Status Kelayakan: 
-                    <strong>{{ $predictedStatus }}</strong>
+            <div class="alert alert-{{ $dataUji->prediksi_kelayakan == 'Layak' ? 'success' : 'danger' }}">
+                <h4 class="alert-heading">
+                    Hasil Prediksi: {{ $dataUji->prediksi_kelayakan }}
                 </h4>
-                <p>Berdasarkan perhitungan KNN dengan 5 tetangga terdekat</p>
-                <hr>
                 <p class="mb-0">
-                    <strong>Distribusi Voting:</strong><br>
-                    Layak: {{ $frequency['Layak'] }} | 
-                    Tidak Layak: {{ $frequency['Tidak Layak'] }} | 
-                    -: {{ $frequency['-'] }}
+                    Tingkat Keyakinan: {{ number_format($confidence, 2) }}%
+                    ({{ array_count_values(array_column($nearestNeighbors, 'class'))[$dataUji->prediksi_kelayakan] }}
+                    dari 5 tetangga terdekat)
                 </p>
             </div>
-            
-            <form action="{{ route('knn.updateStatus', $uji->id) }}" method="POST">
-                @csrf
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="status_persetujuan" class="form-label">Konfirmasi Status</label>
-                            <select class="form-select" id="status_persetujuan" name="status_persetujuan" required>
-                                <option value="diterima" {{ $predictedStatus == 'Layak' ? 'selected' : '' }}>Diterima</option>
-                                <option value="ditolak" {{ $predictedStatus == 'Tidak Layak' ? 'selected' : '' }}>Ditolak</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="catatan" class="form-label">Catatan</label>
-                            <textarea class="form-control" id="catatan" name="catatan" rows="2"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Simpan Keputusan
-                </button>
-            </form>
-        </div>
-    </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5>5 Tetangga Terdekat</h5>
-        </div>
-        <div class="card-body">
+            <h5 class="mt-4">5 Tetangga Terdekat</h5>
             <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>NIK</th>
-                            <th>Nama</th>
-                            <th>Penghasilan</th>
-                            <th>Tabungan</th>
-                            <th>Pinjaman</th>
-                            <th>Status Pinjaman</th>
-                            <th>Status Kelayakan</th>
+                            <th>ID Data Latih</th>
                             <th>Jarak</th>
+                            <th>Kelas</th>
+                            <th>Detail</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($nearestNeighbors as $index => $neighbor)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $neighbor['data']->nik }}</td>
-                            <td>{{ $neighbor['data']->nama }}</td>
-                            <td>Rp {{ number_format($neighbor['data']->penghasilan, 0, ',', '.') }}</td>
-                            <td>Rp {{ number_format($neighbor['data']->jumlah_tabungan, 0, ',', '.') }}</td>
-                            <td>Rp {{ number_format($neighbor['data']->jumlah_pinjaman, 0, ',', '.') }}</td>
-                            <td>{{ $neighbor['data']->status_pinjaman }}</td>
-                            <td>
-                                <span class="badge 
-                                    @if($neighbor['status_kelayakan'] == 'Layak') bg-success
-                                    @elseif($neighbor['status_kelayakan'] == 'Tidak Layak') bg-danger
-                                    @else bg-secondary @endif">
-                                    {{ $neighbor['status_kelayakan'] }}
-                                </span>
-                            </td>
+                        @foreach($nearestNeighbors as $neighbor)
+                        <tr class="{{ $neighbor['class'] == 'Layak' ? 'table-success' : 'table-danger' }}">
+                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $neighbor['id'] }}</td>
                             <td>{{ number_format($neighbor['distance'], 4) }}</td>
+                            <td>{{ $neighbor['class'] }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                    data-bs-target="#detailModal{{ $loop->index }}">
+                                    <i class="fas fa-eye"></i> Lihat
+                                </button>
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
+
+            <a href="{{ route('pengajuan.show', $dataUji->pengajuan_id) }}" class="btn btn-secondary mt-3">
+                <i class="fas fa-arrow-left me-1"></i> Kembali ke Detail Pengajuan
+            </a>
         </div>
     </div>
 </div>
+
+<!-- Modal for neighbor details -->
+@foreach($nearestNeighbors as $index => $neighbor)
+<div class="modal fade" id="detailModal{{ $index }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Data Latih #{{ $neighbor['id'] }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Pekerjaan</th>
+                                <td>{{ $neighbor['details']['pekerjaan'] }}</td>
+                            </tr>
+                            <tr>
+                                <th>Penghasilan</th>
+                                <td>Rp {{ number_format($neighbor['details']['penghasilan'], 0, ',', '.') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Status Pembayaran</th>
+                                <td>{{ $neighbor['details']['status_pembayaran'] }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Lama Keanggotaan</th>
+                                <td>{{ $neighbor['details']['lama_keanggotaan'] }}</td>
+                            </tr>
+                            <tr>
+                                <th>Jumlah Pinjaman</th>
+                                <td>Rp {{ number_format($neighbor['details']['jumlah_pinjaman'], 0, ',', '.') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Jumlah Tabungan</th>
+                                <td>Rp {{ number_format($neighbor['details']['jumlah_tabungan'], 0, ',', '.') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endforeach
 @endsection

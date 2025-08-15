@@ -2,134 +2,115 @@
 
 @section('content')
 <div class="container">
-    <h1>Tambah Anggota</h1>
-
-    @if($errors->any())
+    <h2>Tambah Anggota Baru</h2>
+    
+    @if ($errors->any())
         <div class="alert alert-danger">
             <ul>
                 @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
+                    <li>{{ $error }}</li>
                 @endforeach
             </ul>
         </div>
     @endif
-
+    
     <form action="{{ route('anggota.store') }}" method="POST">
         @csrf
-
-        <!-- NIK -->
+        
         <div class="mb-3">
-            <label for="nik" class="form-label">NIK <span class="text-danger">*</span></label>
-            <input type="text" name="nik" id="nik" class="form-control @error('nik') is-invalid @enderror" 
-                   value="{{ old('nik') }}" maxlength="16" 
-                   oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+            <label class="form-label">NIK</label>
+            <input type="text" name="nik" class="form-control @error('nik') is-invalid @enderror" 
+                   value="{{ old('nik') }}" maxlength="16" required>
             @error('nik')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
-            <small class="form-text text-muted">NIK harus 16 digit angka</small>
+            <small class="text-muted">Masukkan 16 digit NIK</small>
         </div>
-
-        <!-- Nama -->
+        
         <div class="mb-3">
-            <label for="nama" class="form-label">Nama <span class="text-danger">*</span></label>
+            <label class="form-label">Nama</label>
             <input type="text" name="nama" class="form-control @error('nama') is-invalid @enderror" 
                    value="{{ old('nama') }}" required>
             @error('nama')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
-
-        <!-- Pekerjaan -->
+        
         <div class="mb-3">
-            <label for="pekerjaan" class="form-label">Pekerjaan <span class="text-danger">*</span></label>
-            <input type="text" name="pekerjaan" class="form-control @error('pekerjaan') is-invalid @enderror" 
-                   value="{{ old('pekerjaan') }}" required>
+            <label class="form-label">Pekerjaan</label>
+            <select name="pekerjaan" class="form-select @error('pekerjaan') is-invalid @enderror" required>
+                <option value="">Pilih Pekerjaan</option>
+                <option value="PNS" {{ old('pekerjaan') == 'PNS' ? 'selected' : '' }}>PNS</option>
+                <option value="Swasta" {{ old('pekerjaan') == 'Swasta' ? 'selected' : '' }}>Swasta</option>
+                <option value="Wirausaha" {{ old('pekerjaan') == 'Wirausaha' ? 'selected' : '' }}>Wirausaha</option>
+            </select>
             @error('pekerjaan')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
-
-        <!-- Penghasilan -->
+        
         <div class="mb-3">
-            <label for="penghasilan" class="form-label">Penghasilan (Rp) <span class="text-danger">*</span></label>
+            <label class="form-label">Penghasilan</label>
             <input type="number" name="penghasilan" class="form-control @error('penghasilan') is-invalid @enderror" 
                    value="{{ old('penghasilan') }}" min="0" required>
             @error('penghasilan')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
-
-        <!-- Jumlah Tabungan -->
+        
         <div class="mb-3">
-            <label for="jumlah_tabungan" class="form-label">Jumlah Tabungan (Rp) <span class="text-danger">*</span></label>
+            <label class="form-label">Jumlah Tabungan</label>
             <input type="number" name="jumlah_tabungan" class="form-control @error('jumlah_tabungan') is-invalid @enderror" 
                    value="{{ old('jumlah_tabungan') }}" min="0" required>
             @error('jumlah_tabungan')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
-
-        <!-- Jumlah Pinjaman -->
+        
         <div class="mb-3">
-            <label for="jumlah_pinjaman" class="form-label">Jumlah Pinjaman (Rp) <span class="text-danger">*</span></label>
+            <label class="form-label">Jumlah Pinjaman</label>
             <input type="number" name="jumlah_pinjaman" class="form-control @error('jumlah_pinjaman') is-invalid @enderror" 
-                   value="{{ old('jumlah_pinjaman') }}" min="0" required>
+                   value="{{ old('jumlah_pinjaman', 0) }}" min="0" required>
             @error('jumlah_pinjaman')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
-
-        <!-- Status Pinjaman -->
+        
         <div class="mb-3">
-            <label for="status_pinjaman" class="form-label">Status Pinjaman <span class="text-danger">*</span></label>
-            <select name="status_pinjaman" class="form-control @error('status_pinjaman') is-invalid @enderror" required>
+            <label class="form-label">Status Pembayaran</label>
+            <select name="status_pembayaran" class="form-select @error('status_pembayaran') is-invalid @enderror" required>
                 <option value="">Pilih Status</option>
-                <option value="Lunas" {{ old('status_pinjaman') == 'Lunas' ? 'selected' : '' }}>Lunas</option>
-                <option value="Belum Lunas" {{ old('status_pinjaman') == 'Belum Lunas' ? 'selected' : '' }}>Belum Lunas</option>
-                <option value="Menunggak" {{ old('status_pinjaman') == 'Menunggak' ? 'selected' : '' }}>Menunggak</option>
-                <option value="Tidak Meminjam" {{ old('status_pinjaman') == 'Tidak Meminjam' ? 'selected' : '' }}>Tidak Meminjam</option>
+                <option value="Lancar" {{ old('status_pembayaran') == 'Lancar' ? 'selected' : '' }}>Lancar</option>
+                <option value="Menunggak" {{ old('status_pembayaran') == 'Menunggak' ? 'selected' : '' }}>Menunggak</option>
+                <option value="Belum Pernah" {{ old('status_pembayaran') == 'Belum Pernah' ? 'selected' : '' }}>Belum Pernah Pinjam</option>
             </select>
-            @error('status_pinjaman')
+            @error('status_pembayaran')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
-
-        <!-- Lama Keanggotaan -->
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="lama_keanggotaan_tahun" class="form-label">Lama Keanggotaan (Tahun) <span class="text-danger">*</span></label>
-                <input type="number" name="lama_keanggotaan_tahun" class="form-control @error('lama_keanggotaan_tahun') is-invalid @enderror"
-                       value="{{ old('lama_keanggotaan_tahun') }}" min="0" required>
-                @error('lama_keanggotaan_tahun')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="lama_keanggotaan_bulan" class="form-label">Lama Keanggotaan (Bulan) <span class="text-danger">*</span></label>
-                <input type="number" name="lama_keanggotaan_bulan" class="form-control @error('lama_keanggotaan_bulan') is-invalid @enderror"
-                       value="{{ old('lama_keanggotaan_bulan') }}" min="0" max="11" required>
-                @error('lama_keanggotaan_bulan')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-        </div>
-
-        <!-- Status Kelayakan -->
+        
         <div class="mb-3">
-            <label for="status_kelayakan" class="form-label">Status Kelayakan <span class="text-danger">*</span></label>
-            <select name="status_kelayakan" class="form-control @error('status_kelayakan') is-invalid @enderror" required>
-                <option value="">Pilih Status</option>
-                <option value="Layak" {{ old('status_kelayakan') == 'Layak' ? 'selected' : '' }}>Layak</option>
-                <option value="Tidak Layak" {{ old('status_kelayakan') == 'Tidak Layak' ? 'selected' : '' }}>Tidak Layak</option>
-                <option value="-" {{ old('status_kelayakan') == '-' ? 'selected' : '' }}>-</option>
+            <label class="form-label">Lama Keanggotaan</label>
+            <select name="lama_keanggotaan" class="form-select @error('lama_keanggotaan') is-invalid @enderror" required>
+                <option value="">Pilih Lama Keanggotaan</option>
+                <option value="<1 Tahun" {{ old('lama_keanggotaan') == '<1 Tahun' ? 'selected' : '' }}>< 1 Tahun</option>
+                <option value="1-2 Tahun" {{ old('lama_keanggotaan') == '1-2 Tahun' ? 'selected' : '' }}>1-2 Tahun</option>
+                <option value=">2 Tahun" {{ old('lama_keanggotaan') == '>2 Tahun' ? 'selected' : '' }}>> 2 Tahun</option>
             </select>
-            @error('status_kelayakan')
+            @error('lama_keanggotaan')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
-
+        
         <button type="submit" class="btn btn-primary">Simpan</button>
         <a href="{{ route('anggota.index') }}" class="btn btn-secondary">Batal</a>
     </form>
 </div>
+
+<script>
+// Validasi client-side untuk NIK (hanya angka)
+document.querySelector('input[name="nik"]').addEventListener('input', function(e) {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+</script>
 @endsection

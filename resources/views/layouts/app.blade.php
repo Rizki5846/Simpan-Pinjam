@@ -146,7 +146,7 @@
         </li>
 
         @if (auth()->user()->level == 'Admin')
-            <a href="{{ route('Anggota.index') }}" class="nav-link {{ request()->is('Anggota*') ? 'active' : '' }}">
+            <a href="{{ route('anggota.index') }}" class="nav-link {{ request()->is('anggota*') ? 'active' : '' }}">
                 <i class="bi bi-database"></i> Data Anggota
             </a>
             <a href="{{ route('latih.index') }}" class="nav-link {{ request()->is('latih*') ? 'active' : '' }}">
@@ -155,9 +155,9 @@
             <a href="{{ route('uji.index') }}" class="nav-link {{ request()->is('uji*') ? 'active' : '' }}">
                 <i class="bi bi-database"></i> Data Uji
             </a>
-            <a href="{{ route('pinjaman.index') }}" class="nav-link {{ request()->is('pinjaman*') ? 'active' : '' }}">
-                <i class="bi bi-cash-coin"></i> Data Pinjaman
-            </a>
+            <a href="{{ route('pengajuan.index') }}" class="nav-link {{ request()->is('pengajuan*') ? 'active' : '' }}">
+                <i class="bi bi-database"></i> Pengajuan Pinjaman
+            </a> 
             <a href="{{ route('knn.index') }}" class="nav-link {{ request()->is('knn') ? 'active' : '' }}">
                 <i class="bi bi-file-earmark-text"></i> Penghitungan KNN
             </a>

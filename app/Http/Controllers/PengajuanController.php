@@ -3,27 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Anggota;
-use Illuminate\Http\Request;
 use App\Models\Pengajuan;
+use App\Models\Uji;
+use Illuminate\Http\Request;
 
 class PengajuanController extends Controller
 {
+    public function index()
+    {
+        $pengajuan = Pengajuan::latest()->get();
+        return view('pengajuan.index', compact('pengajuan'));
+    }
+
     public function create()
     {
         return view('pengajuan.create');
     }
 
-    public function getAnggota(Request $request)
+    public function checkNik(Request $request)
     {
-        $request->validate([
-            'nik' => 'required|string'
-        ]);
-
+        $request->validate(['nik' => 'required|digits:16']);
+        
         $anggota = Anggota::where('nik', $request->nik)->first();
 
         if (!$anggota) {
             return response()->json([
-                'error' => 'Anggota dengan NIK tersebut tidak ditemukan'
+                'error' => 'NIK tidak terdaftar'
             ], 404);
         }
 
@@ -33,64 +38,79 @@ class PengajuanController extends Controller
                 'nama' => $anggota->nama,
                 'pekerjaan' => $anggota->pekerjaan,
                 'penghasilan' => $anggota->penghasilan,
-                'status_pinjaman' => $anggota->status_pinjaman,
-                'jumlah_pinjaman' => $anggota->jumlah_pinjaman,
                 'jumlah_tabungan' => $anggota->jumlah_tabungan,
-                'lama_keanggotaan_tahun' => $anggota->lama_keanggotaan_tahun,
-                'lama_keanggotaan_bulan' => $anggota->lama_keanggotaan_bulan,
-                'status_kelayakan' => $anggota->status_kelayakan
+                'status_pembayaran' => $anggota->status_pembayaran,
+                'lama_keanggotaan' => $anggota->lama_keanggotaan,
+                'maks_pinjaman' => $anggota->jumlah_tabungan * 3
             ]
         ]);
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nik' => 'required|string',
-            'nama' => 'required|string',
-            'pekerjaan' => 'required|string',
-            'penghasilan' => 'required|numeric',
-            'tabungan' => 'required|numeric',
-            'pinjaman' => 'required|numeric',
-        ]);
+   public function store(Request $request)
+{
+    $request->validate([
+        'nik' => 'required|exists:anggota,nik',
+        'jumlah_pinjaman' => 'required|numeric|min:100000',
+        'maks_pinjaman' => 'required|numeric'
+    ]);
 
-        $anggota = Anggota::where('nik', $request->nik)->first();
+    $anggota = Anggota::where('nik', $request->nik)->firstOrFail();
 
-        $pengajuan = new Pengajuan();
-        $pengajuan->nik = $request->nik;
-        $pengajuan->nama = $request->nama;
-        $pengajuan->pekerjaan = $request->pekerjaan;
-        $pengajuan->penghasilan = $request->penghasilan;
-        $pengajuan->tabungan = $request->tabungan;
-        $pengajuan->pinjaman = $request->pinjaman;
-        $pengajuan->status_pinjaman = $anggota ? $anggota->status_pinjaman : null;
-        $pengajuan->anggota_id = $anggota ? $anggota->id : null;
-        $pengajuan->user_id = auth()->id();
-        $pengajuan->status_persetujuan = 'sedang proses'; // Set default status
-        $pengajuan->save();
-
-        return redirect()->route('pengajuan.index')->with('success', 'Pengajuan berhasil dibuat!');
+    if ($request->jumlah_pinjaman > $request->maks_pinjaman) {
+        return back()->withErrors([
+            'jumlah_pinjaman' => 'Jumlah pinjaman melebihi batas maksimal'
+        ])->withInput();
     }
 
-    public function index()
-    {
-        $pengajuan = Pengajuan::with('anggota')->latest()->get();
-        return view('pengajuan.index', compact('pengajuan'));
-    }
+    Pengajuan::create([
+        'nik' => $request->nik,
+        'nama' => $anggota->nama,
+        'pekerjaan' => $anggota->pekerjaan,
+        'penghasilan' => $anggota->penghasilan,
+        'jumlah_tabungan' => $anggota->jumlah_tabungan,
+        'jumlah_pinjaman' => $request->jumlah_pinjaman,
+        'status_pembayaran' => $anggota->status_pembayaran,
+        'lama_keanggotaan' => $anggota->lama_keanggotaan,
+        'status' => 'Menunggu'
+    ]);
 
-    // Tambahkan method untuk mengupdate status persetujuan
-    public function updateStatus(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'required|in:diterima,ditolak,sedang proses',
-            'catatan' => 'nullable|string'
-        ]);
+    return redirect()->route('pengajuan.index')
+           ->with('success', 'Pengajuan berhasil disimpan');
+}
+public function show($id)
+{
+    $pengajuan = Pengajuan::findOrFail($id);
+    return view('pengajuan.show', compact('pengajuan'));
+}
+public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:Disetujui,Ditolak',
+        'alasan_penolakan' => 'required_if:status,Ditolak|max:255'
+    ]);
 
+    $pengajuan = Pengajuan::findOrFail($id);
+
+    $pengajuan->update([
+        'status' => $request->status,
+        'alasan_penolakan' => $request->alasan_penolakan,
+        'tanggal_diproses' => now()
+    ]);
+
+    return back()->with('success', 'Status pengajuan berhasil diperbarui');
+}
+
+    public function convertToUji($id)
+    {
         $pengajuan = Pengajuan::findOrFail($id);
-        $pengajuan->status_persetujuan = $request->status;
-        $pengajuan->catatan = $request->catatan;
-        $pengajuan->save();
 
-        return back()->with('success', 'Status pengajuan berhasil diperbarui');
+        // Cek kalau sudah pernah diubah jadi data uji
+        if (Uji::where('pengajuan_id', $pengajuan->id)->exists()) {
+            return back()->with('error', 'Data uji sudah ada untuk pengajuan ini');
+        }
+
+        Uji::create($pengajuan->convertToUji());
+
+        return back()->with('success', 'Berhasil konversi ke data uji');
     }
 }

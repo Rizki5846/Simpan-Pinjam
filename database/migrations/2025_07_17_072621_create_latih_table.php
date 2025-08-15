@@ -9,17 +9,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('latih', function (Blueprint $table) {
-            $table->id();
-            $table->string('nik')->unique();
-            $table->string('nama');
-            $table->string('pekerjaan');
-            $table->decimal('penghasilan', 15, 2);
-            $table->decimal('jumlah_tabungan', 15, 2); // sama dengan anggota
-            $table->decimal('jumlah_pinjaman', 15, 2); // sama dengan anggota
-            $table->enum('status_pinjaman', ['Lunas', 'Belum Lunas', 'Menunggak', 'Tidak Meminjam']);
-            $table->enum('status_kelayakan', ['Layak', 'Tidak Layak', '-']);
-            $table->timestamps();
-        });
+        $table->id();
+        $table->decimal('pekerjaan', 3, 2); // 0, 0.5, 1
+        $table->decimal('penghasilan', 3, 2); // 0-1 (normalized)
+        $table->decimal('status_pembayaran', 3, 2); // 0, 0.5, 1
+        $table->decimal('lama_keanggotaan', 3, 2); // 0, 0.5, 1
+        $table->decimal('jumlah_pinjaman', 3, 2); // 0-1 (normalized)
+        $table->decimal('jumlah_tabungan', 3, 2); // 0-1 (normalized)
+        $table->enum('status_kelayakan', ['Layak', 'Tidak Layak']);
+        $table->foreignId('anggota_id')->constrained('anggota');
+        $table->timestamps();
+    });
     }
 
     public function down(): void

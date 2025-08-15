@@ -10,15 +10,17 @@ class Uji extends Model
 {
 	use HasFactory;
 
-	protected $table = 'uji';
+	protected $table = 'data_uji';
+    protected $fillable = [
+        'pekerjaan', 'penghasilan', 'status_pembayaran',
+        'lama_keanggotaan', 'jumlah_pinjaman', 'jumlah_tabungan',
+        'prediksi_kelayakan', 'pengajuan_id'
+    ];
 
-	protected $fillable = ['nik','nama', 'pekerjaan', 'penghasilan', 'tabungan', 'pinjaman', 'status_pinjaman','status_persetujuan','catatan','anggota_id','pengajuan_id'];
-	
-
-		public function pengajuan()
-		{
-			return $this->belongsTo(Pengajuan::class);
-		}
+    public function pengajuan()
+    {
+        return $this->belongsTo(Pengajuan::class);
+    }
 
 		public function anggota()
 		{
@@ -29,5 +31,12 @@ class Uji extends Model
 		{
 			return $this->belongsTo(User::class);
 		}
+	public function riwayat()
+    {
+        return $this->hasMany(RiwayatKlasifikasi::class);
+    }
+	protected $casts = [
+    'neighbors' => 'array'
+];
 
 }

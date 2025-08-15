@@ -2,158 +2,116 @@
 
 @section('content')
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">Buat Pengajuan Baru</div>
+    <h2>Form Pengajuan Pinjaman</h2>
+    
+<form id="formPengajuan" method="POST" action="{{ route('pengajuan.store') }}">
+    @csrf
+    
+    <!-- Input NIK -->
+    <div class="mb-3">
+        <label for="nik" class="form-label">NIK Anggota</label>
+        <input type="text" class="form-control" id="nik" name="nik" 
+               required maxlength="16" onblur="checkNik()">
+        <div id="nikFeedback" class="invalid-feedback"></div>
+    </div>
 
-                <div class="card-body">
-                    <form id="pengajuanForm" method="POST" action="{{ route('pengajuan.store') }}">
-                        @csrf
-
-                        <div class="form-group row">
-                            <label for="nik" class="col-md-4 col-form-label text-md-right">NIK Anggota</label>
-                            <div class="col-md-6">
-                                <input id="nik" type="text" class="form-control @error('nik') is-invalid @enderror" 
-                                       name="nik" value="{{ old('nik') }}" required autocomplete="off">
-                                @error('nik')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                                <small class="text-muted">Masukkan NIK anggota untuk mengisi data otomatis</small>
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label class="col-md-4 col-form-label text-md-right">Status Pinjaman</label>
-                            <div class="col-md-6">
-                                <input type="text" id="status_pinjaman" class="form-control" readonly>
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label class="col-md-4 col-form-label text-md-right">Lama Keanggotaan</label>
-                            <div class="col-md-6">
-                                <input type="text" id="lama_keanggotaan" class="form-control" readonly>
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="nama" class="col-md-4 col-form-label text-md-right">Nama Lengkap</label>
-                            <div class="col-md-6">
-                                <input id="nama" type="text" class="form-control @error('nama') is-invalid @enderror" 
-                                       name="nama" value="{{ old('nama') }}" required>
-                                @error('nama')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="pekerjaan" class="col-md-4 col-form-label text-md-right">Pekerjaan</label>
-                            <div class="col-md-6">
-                                <input id="pekerjaan" type="text" class="form-control @error('pekerjaan') is-invalid @enderror" 
-                                       name="pekerjaan" value="{{ old('pekerjaan') }}" required>
-                                @error('pekerjaan')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="penghasilan" class="col-md-4 col-form-label text-md-right">Penghasilan</label>
-                            <div class="col-md-6">
-                                <input id="penghasilan" type="number" class="form-control @error('penghasilan') is-invalid @enderror" 
-                                       name="penghasilan" value="{{ old('penghasilan') }}" required>
-                                @error('penghasilan')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="tabungan" class="col-md-4 col-form-label text-md-right">Tabungan</label>
-                            <div class="col-md-6">
-                                <input id="tabungan" type="number" class="form-control @error('tabungan') is-invalid @enderror" 
-                                       name="tabungan" value="{{ old('tabungan') }}" required>
-                                @error('tabungan')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="pinjaman" class="col-md-4 col-form-label text-md-right">Jumlah Pinjaman</label>
-                            <div class="col-md-6">
-                                <input id="pinjaman" type="number" class="form-control @error('pinjaman') is-invalid @enderror" 
-                                       name="pinjaman" value="{{ old('pinjaman') }}" required>
-                                @error('pinjaman')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    Submit Pengajuan
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
+    <!-- Data Anggota (Auto-fill) -->
+    <div class="card mb-3 d-none" id="anggotaData">
+        <div class="card-header">Data Anggota</div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tr>
+                    <th width="30%">Nama</th>
+                    <td id="namaAnggota">-</td>
+                </tr>
+                <tr>
+                    <th>Pekerjaan</th>
+                    <td id="pekerjaanAnggota">-</td>
+                </tr>
+                <tr>
+                    <th>Penghasilan</th>
+                    <td id="penghasilanAnggota">Rp 0</td>
+                </tr>
+                <tr>
+                    <th>Jumlah Tabungan</th>
+                    <td id="tabunganAnggota">Rp 0</td>
+                </tr>
+                <tr>
+                    <th>Status Pembayaran</th>
+                    <td id="statusAnggota">-</td>
+                </tr>
+                <tr>
+                    <th>Lama Keanggotaan</th>
+                    <td id="lamaAnggota">-</td>
+                </tr>
+                <tr class="table-info">
+                    <th>Maksimal Pinjaman</th>
+                    <td id="maksPinjaman">Rp 0</td>
+                </tr>
+            </table>
+            <input type="hidden" name="maks_pinjaman" id="maksPinjamanInput">
         </div>
     </div>
-</div>
+
+    <!-- Input Jumlah Pinjaman -->
+    <div class="mb-3">
+        <label for="jumlah_pinjaman" class="form-label">Jumlah Pinjaman</label>
+        <input type="number" class="form-control" id="jumlah_pinjaman" 
+               name="jumlah_pinjaman" required>
+        <small class="text-muted">Maksimal: <span id="maxPinjamanText">Rp 0</span></small>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Ajukan Pinjaman</button>
+</form>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const nikInput = document.getElementById('nik');
+function checkNik() {
+    const nik = document.getElementById('nik').value;
+    const feedback = document.getElementById('nikFeedback');
+    const form = document.getElementById('formPengajuan');
     
-    nikInput.addEventListener('change', function() {
-        const nik = this.value;
+    if (nik.length !== 16) {
+        feedback.innerText = 'NIK harus 16 digit';
+        form.classList.add('was-validated');
+        return;
+    }
+
+    fetch('{{ route("pengajuan.check-nik") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ nik: nik })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const anggotaData = document.getElementById('anggotaData');
         
-        if (!nik) return;
-        
-        fetch(`/get-anggota?nik=${encodeURIComponent(nik)}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-                
-                // Auto-fill the fields
-                document.getElementById('nama').value = data.data.nama;
-                document.getElementById('pekerjaan').value = data.data.pekerjaan;
-                document.getElementById('penghasilan').value = data.data.penghasilan;
-                document.getElementById('status_pinjaman').value = data.data.status_pinjaman;
-                
-                const lamaKeanggotaan = `${data.data.lama_keanggotaan_tahun} tahun ${data.data.lama_keanggotaan_bulan} bulan`;
-                document.getElementById('lama_keanggotaan').value = lamaKeanggotaan;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan saat mengambil data anggota');
-            });
+        if (data.error) {
+            feedback.innerText = data.error;
+            anggotaData.classList.add('d-none');
+        } else {
+            // Isi data otomatis
+            document.getElementById('namaAnggota').innerText = data.data.nama;
+            document.getElementById('pekerjaanAnggota').innerText = data.data.pekerjaan;
+            document.getElementById('penghasilanAnggota').innerText = formatRupiah(data.data.penghasilan);
+            document.getElementById('tabunganAnggota').innerText = formatRupiah(data.data.jumlah_tabungan);
+            document.getElementById('statusAnggota').innerText = data.data.status_pembayaran;
+            document.getElementById('lamaAnggota').innerText = data.data.lama_keanggotaan;
+            document.getElementById('maksPinjaman').innerText = formatRupiah(data.data.maks_pinjaman);
+            document.getElementById('maxPinjamanText').innerText = formatRupiah(data.data.maks_pinjaman);
+            document.getElementById('maksPinjamanInput').value = data.data.maks_pinjaman;
+            
+            anggotaData.classList.remove('d-none');
+            feedback.innerText = '';
+        }
+        form.classList.add('was-validated');
     });
-});
+}
+
+function formatRupiah(angka) {
+    return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 </script>
 @endsection

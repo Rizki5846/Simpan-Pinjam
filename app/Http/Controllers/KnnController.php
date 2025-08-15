@@ -3,100 +3,68 @@
 namespace App\Http\Controllers;
 
 use App\Models\Latih;
+use App\Models\RiwayatKlasifikasi;
 use App\Models\Uji;
+use App\Services\KNNService;
 use Illuminate\Http\Request;
 
 class KnnController extends Controller
 {
     public function index()
     {
-        $ujiData = Uji::where('status_persetujuan', 'sedang proses')->get();
+        $ujiData = Uji::with('pengajuan')
+                  ->orderBy('created_at', 'desc')
+                  ->paginate(10);
+        
         return view('knn.index', compact('ujiData'));
     }
 
-   public function classify(Request $request, $id)
+public function show($id)
+{
+    $dataUji = Uji::with(['pengajuan', 'riwayat' => function($query) {
+        $query->latest()->limit(1); // Ambil hanya 1 record terbaru
+    }])->findOrFail($id);
+
+    $neighbors = $dataUji->neighbors 
+                ?? optional($dataUji->riwayat->first())->neighbors
+                ?? [];
+
+    return view('knn.show', compact('dataUji', 'neighbors'));
+}
+    public function classify($id)
     {
-        $uji = Uji::findOrFail($id);
-        $latihData = Latih::all();
+        $dataUji = Uji::findOrFail($id);
+        $knn = new KNNService(5); // Using K=5
         
-        $distances = [];
-        foreach ($latihData as $latih) {
-            $distance = $this->calculateDistance($uji, $latih);
-            $distances[] = [
-                'data' => $latih,
-                'distance' => $distance,
-                'status_kelayakan' => $latih->status_kelayakan ?? '-'
-            ];
-        }
+        $result = $knn->predict($dataUji);
         
-        usort($distances, function ($a, $b) {
-            return $a['distance'] <=> $b['distance'];
-        });
-        
-        $k = 5;
-        $nearestNeighbors = array_slice($distances, 0, $k);
-        
-        // Inisialisasi dengan semua kemungkinan status
-        $frequency = [
-            'Layak' => 0,
-            'Tidak Layak' => 0,
-            '-' => 0
-        ];
-        
-        foreach ($nearestNeighbors as $neighbor) {
-            $status = $neighbor['status_kelayakan'];
-            if (array_key_exists($status, $frequency)) {
-                $frequency[$status]++;
-            } else {
-                // Log unexpected status if needed
-                $frequency['-']++;
-            }
-        }
-        
-        arsort($frequency);
-        $predictedStatus = key($frequency);
-        
-        return view('knn.result', [
-            'uji' => $uji,
-            'nearestNeighbors' => $nearestNeighbors,
-            'predictedStatus' => $predictedStatus,
-            'frequency' => $frequency
+        // Update prediction result
+        $dataUji->update([
+            'prediksi_kelayakan' => $result['prediction'],
+            'confidence' => $result['confidence']
         ]);
+        
+        // Simpan ke riwayat
+        RiwayatKlasifikasi::create([
+            'uji_id' => $dataUji->id,
+            'prediksi_kelayakan' => $result['prediction'],
+            'confidence' => $result['confidence'],
+            'neighbors' => $result['neighbors']
+        ]);
+        
+        return redirect()->route('knn.show', $dataUji->id)
+            ->with([
+                'success' => 'Klasifikasi berhasil dilakukan',
+                'neighbors' => $result['neighbors']
+            ]);
     }
-    
-    private function calculateDistance($uji, $latih)
+
+    public function riwayat()
     {
-        // Normalisasi data sebelum menghitung jarak
-        $maxPenghasilan = Latih::max('penghasilan');
-        $maxTabungan = Latih::max('jumlah_tabungan');
-        $maxPinjaman = Latih::max('jumlah_pinjaman');
+        $riwayat = RiwayatKlasifikasi::with('uji.pengajuan')
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
         
-        // Hitung jarak Euclidean dengan normalisasi
-        $penghasilanDiff = ($uji->penghasilan - $latih->penghasilan) / $maxPenghasilan;
-        $tabunganDiff = ($uji->tabungan - $latih->jumlah_tabungan) / $maxTabungan;
-        $pinjamanDiff = ($uji->pinjaman - $latih->jumlah_pinjaman) / $maxPinjaman;
-        
-        return sqrt(
-            pow($penghasilanDiff, 2) + 
-            pow($tabunganDiff, 2) + 
-            pow($pinjamanDiff, 2)
-        );
-    }
-    
-    public function updateStatus(Request $request, $id)
-    {
-        $request->validate([
-            'status_persetujuan' => 'required|in:diterima,ditolak',
-            'catatan' => 'nullable|string'
-        ]);
-        
-        $uji = Uji::findOrFail($id);
-        $uji->update([
-            'status_persetujuan' => $request->status_persetujuan,
-            'catatan' => $request->catatan,
-            'status_kelayakan' => $request->status_persetujuan == 'diterima' ? 'Layak' : 'Tidak Layak'
-        ]);
-        
-        return redirect()->route('knn.index')->with('success', 'Status pengajuan berhasil diperbarui');
+        return view('knn.riwayat', compact('riwayat'));
     }
 }

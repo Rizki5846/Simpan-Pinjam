@@ -10,23 +10,13 @@ return new class extends Migration
     {
         Schema::create('pengajuan', function (Blueprint $table) {
             $table->id();
-            $table->string('nik');
             $table->string('nama');
-            $table->string('pekerjaan');
-            $table->integer('penghasilan');
-            $table->integer('tabungan');
-            $table->integer('pinjaman');
-            $table->string('status_pinjaman')->nullable();
-            $table->string('status_persetujuan')->default('sedang proses'); // Tambahkan ini
-            $table->text('catatan')->nullable(); // Opsional: untuk catatan persetujuan
-            $table->unsignedBigInteger('user_id')->nullable();
-            
-            $table->unsignedBigInteger('anggota_id')->nullable();
-            $table->foreign('anggota_id')
-                ->references('id')
-                ->on('anggota')
-                ->onDelete('set null');
-
+            $table->enum('pekerjaan', ['PNS', 'Swasta', 'Wirausaha']);
+            $table->decimal('penghasilan', 15, 2);
+            $table->decimal('jumlah_tabungan', 15, 2);
+            $table->decimal('jumlah_pinjaman', 15, 2);
+            $table->enum('status_pembayaran', ['Lancar', 'Menunggak', 'Belum Pernah']);
+            $table->enum('lama_keanggotaan', ['<1 Tahun', '1-2 Tahun', '>2 Tahun']);
             $table->timestamps();
         });
     }

@@ -52,7 +52,7 @@ Route::middleware('auth')->group(function () {
 	//Route::post('/Riwayat_Hitungan/kirim-ke-data-uji', [RiwayatPenghitunganController::class, 'kirimKeDataUji'])->name('riwayat_hitungan.kirimKeDataUjih');
 	Route::get('/riwayat', [RiwayatController::class, 'index'])->name('Riwayat.index');
 
-	Route::get('/pengajuan', [PengajuanController::class, 'index'])->name('pengajuan.index');
+	// Route::get('/pengajuan', [PengajuanController::class, 'index'])->name('pengajuan.index');
 	Route::resource('/laporan', LaporanController::class);
 	//Route::get('/riwayat-hitungan/layak', [RiwayatPenghitunganController::class, 'layak'])->name('Riwayat_Hitungan.Layak');
 	//Route::post('/riwayat-hitungan/kirim-ke-data-uji', [RiwayatPenghitunganController::class, 'kirimKeDataUji'])->name('Riwayat_Hitungan.kirimKeDataUji');
@@ -76,17 +76,20 @@ Route::post('/penghitungan-knn/hitung', [PenghitunganKnnController::class, 'hitu
 Route::post('/latih/kirim', [LatihController::class, 'store'])->name('latih.store'); 
 Route::delete('/latih/{id}', [LatihController::class, 'destroy'])->name('latih.destroy');
 
+Route::resource('anggota', AnggotaController::class);
+Route::post('/anggota/{id}/convert', [AnggotaController::class, 'convertToLatih'])
+     ->name('anggota.convert');
 
-Route::controller(AnggotaController::class)->prefix('Anggota')->group(function () {
-	Route::get('', 'index')->name('Anggota.index');
-	Route::get('create', 'create')->name('Anggota.create');
-	Route::post('create', 'store')->name('Anggota.create.store');
-	Route::get('edit/{id}', 'edit')->name('Anggota.edit');
-	Route::post('edit/{id}', 'update')->name('Anggota.tambah.update');
-	Route::get('hapus/{id}', 'hapus')->name('Anggota.hapus');
-	Route::resource('anggota', AnggotaController::class);
-	Route::post('anggota/import', [AnggotaController::class, 'import'])->name('anggota.import');
-});
+// Route::controller(AnggotaController::class)->prefix('Anggota')->group(function () {
+// 	Route::get('', 'index')->name('Anggota.index');
+// 	Route::get('create', 'create')->name('Anggota.create');
+// 	Route::post('create', 'store')->name('Anggota.create.store');
+// 	Route::get('edit/{id}', 'edit')->name('Anggota.edit');
+// 	Route::post('edit/{id}', 'update')->name('Anggota.tambah.update');
+// 	Route::get('hapus/{id}', 'hapus')->name('Anggota.hapus');
+// 	Route::resource('anggota', AnggotaController::class);
+// 	Route::post('anggota/import', [AnggotaController::class, 'import'])->name('anggota.import');
+// });
 // Route::controller(RiwayatPenghitunganController::class)->prefix('riwayathitungan')->group(function () {
 // 	Route::get('', 'index')->name('riwayathitungan.index');
 // 	Route::get('create', 'create')->name('riwayathitungan.create');
@@ -110,11 +113,12 @@ Route::controller(LatihController::class)->prefix('latih')->group(function () {
 
    Route::resource('uji', UjiController::class)->middleware('auth');
 
-   Route::middleware(['auth'])->prefix('knn')->group(function () {
+Route::prefix('knn')->group(function () {
     Route::get('/', [KnnController::class, 'index'])->name('knn.index');
-    Route::get('/classify/{id}', [KnnController::class, 'classify'])->name('knn.classify');
-    Route::post('/update-status/{id}', [KnnController::class, 'updateStatus'])->name('knn.updateStatus');
-});
+    Route::get('/{id}', [KnnController::class, 'show'])->name('knn.show');
+    Route::get('/{id}/classify', [KnnController::class, 'classify'])->name('knn.classify');
+    Route::get('/knn/riwayat', [KnnController::class, 'riwayat'])->name('knn.riwayat');
+    });
 
 // Route::controller(UjiController::class)->prefix('uji')->group(function () {
 // 	Route::get('', 'index')->name('uji.index');
@@ -137,13 +141,23 @@ Route::controller(LatihController::class)->prefix('latih')->group(function () {
 //     Route::post('/{id}/update-status', [PinjamanController::class, 'updateStatus'])->name('updateStatus');
 //     Route::post('/{id}/kirim-ke-uji', [PinjamanController::class, 'kirimKeUji'])->name('kirimKeUji');
 // });
+Route::prefix('pengajuan')->group(function () {
+    Route::get('/', [PengajuanController::class, 'index'])->name('pengajuan.index');
+    Route::get('/create', [PengajuanController::class, 'create'])->name('pengajuan.create');
+    Route::post('/check-nik', [PengajuanController::class, 'checkNik'])->name('pengajuan.check-nik');
+    Route::post('/', [PengajuanController::class, 'store'])->name('pengajuan.store');
+    Route::get('/pengajuan/{id}', [PengajuanController::class, 'show'])->name('pengajuan.show');
+    Route::put('/pengajuan/{pengajuan}/status', [PengajuanController::class, 'updateStatus'])
+    ->name('pengajuan.update-status');
+    Route::post('/pengajuan/{id}/convert-uji', [PengajuanController::class, 'convertToUji'])->name('pengajuan.convert.uji');
 
+});
 	
-Route::get('/pengajuan', [PengajuanController::class, 'index'])->name('pengajuan.index');
-    Route::get('/pengajuan/create', [PengajuanController::class, 'create'])->name('pengajuan.create');
-    Route::post('/pengajuan', [PengajuanController::class, 'store'])->name('pengajuan.store');
-    Route::get('/get-anggota', [PengajuanController::class, 'getAnggota'])->name('pengajuan.get-anggota');
-	Route::post('/pengajuan/{id}/update-status', [PengajuanController::class, 'updateStatus'])->name('pengajuan.updateStatus');
+// Route::get('/pengajuan', [PengajuanController::class, 'index'])->name('pengajuan.index');
+//     Route::get('/pengajuan/create', [PengajuanController::class, 'create'])->name('pengajuan.create');
+//     Route::post('/pengajuan', [PengajuanController::class, 'store'])->name('pengajuan.store');
+//     Route::get('/get-anggota', [PengajuanController::class, 'getAnggota'])->name('pengajuan.get-anggota');
+// 	Route::post('/pengajuan/{id}/update-status', [PengajuanController::class, 'updateStatus'])->name('pengajuan.updateStatus');
 
 // Route::controller(PengajuanController::class)->prefix('pengajuan')->group(function () {
 // // 	Route::get('', 'index')->name('pengajuan.index');

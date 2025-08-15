@@ -2,45 +2,67 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Pengajuan extends Model
 {
-    use HasFactory;
-
-   protected $table = 'pengajuan';
-
+    protected $table = 'pengajuan';
     protected $fillable = [
-        'nik',
-        'nama',
-        'pekerjaan',
-        'penghasilan',
-        'tabungan',
-        'pinjaman',
-        'status_pinjaman',
-        'user_id',
-        'anggota_id'
+        'nik', 'nama', 'pekerjaan', 'penghasilan', 
+        'jumlah_tabungan', 'jumlah_pinjaman', 
+        'status_pembayaran', 'lama_keanggotaan',
+        'status', 'alasan_penolakan',
     ];
-    
-    public function user()
+
+    public function convertToUji()
     {
-        return $this->belongsTo(User::class);
+        return [
+            'pekerjaan'         => $this->convertPekerjaan($this->pekerjaan),
+            'penghasilan'       => $this->normalizeMinMax('penghasilan'),
+            'status_pembayaran' => $this->convertStatus($this->status_pembayaran),
+            'lama_keanggotaan'  => $this->convertLama($this->lama_keanggotaan),
+            'jumlah_pinjaman'   => $this->normalizeMinMax('jumlah_pinjaman'),
+            'jumlah_tabungan'   => $this->normalizeMinMax('jumlah_tabungan'),
+            'pengajuan_id'      => $this->id
+        ];
     }
 
-    // Kalau kamu punya tabel anggota terpisah
-    public function riwayat()
+    private function convertPekerjaan($value)
     {
-        return $this->hasMany(Pengajuan::class); // jika pengajuan = riwayat
+        return match($value) {
+            'PNS' => 1.0,
+            'Swasta' => 0.5,
+            'Wirausaha' => 0.0
+        };
     }
 
-    public function anggota()
+    private function convertStatus($value)
     {
-        return $this->belongsTo(Anggota::class);
+        return match($value) {
+            'Lancar' => 0.0,
+            'Belum Pernah' => 0.5,
+            'Menunggak' => 1.0
+        };
     }
-    
-    public function uji()
+
+    private function convertLama($value)
     {
-        return $this->hasOne(Uji::class);
+        return match($value) {
+            '<1 Tahun' => 0.0,
+            '1-2 Tahun' => 0.5,
+            '>2 Tahun' => 1.0
+        };
+    }
+
+    private function normalizeMinMax($column)
+    {
+        $min = self::min($column);
+        $max = self::max($column);
+
+        if ($max == $min) {
+            return 0;
+        }
+
+        return ($this->$column - $min) / ($max - $min);
     }
 }

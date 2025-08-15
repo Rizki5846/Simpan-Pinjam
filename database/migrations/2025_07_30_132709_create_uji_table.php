@@ -8,23 +8,16 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('uji', function (Blueprint $table) {
+       Schema::create('data_uji', function (Blueprint $table) {
             $table->id();
-            $table->string('nik');
-            $table->string('nama');
-            $table->string('pekerjaan');
-            $table->decimal('penghasilan', 12, 2);
-            $table->decimal('tabungan', 12, 2);
-            $table->decimal('pinjaman', 12, 2);
-            $table->string('status_pinjaman')->nullable();
-            $table->string('status_persetujuan')->default('sedang proses');
-            $table->text('catatan')->nullable();
-            
-            // Foreign keys
-            $table->foreignId('anggota_id')->nullable()->constrained('anggota')->onDelete('set null');
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('pangajuan_id')->nullable()->constrained('pengajuan')->onDelete('set null');
-            
+            $table->decimal('pekerjaan', 3, 2);
+            $table->decimal('penghasilan', 3, 2);
+            $table->decimal('status_pembayaran', 3, 2);
+            $table->decimal('lama_keanggotaan', 3, 2);
+            $table->decimal('jumlah_pinjaman', 3, 2);
+            $table->decimal('jumlah_tabungan', 3, 2);
+            $table->enum('prediksi_kelayakan', ['Layak', 'Tidak Layak'])->nullable();
+            $table->foreignId('pengajuan_id')->constrained('pengajuan');
             $table->timestamps();
         });
     }
