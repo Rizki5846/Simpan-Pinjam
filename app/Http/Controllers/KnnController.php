@@ -7,6 +7,7 @@ use App\Models\RiwayatKlasifikasi;
 use App\Models\Uji;
 use App\Services\KNNService;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class KnnController extends Controller
 {
@@ -66,5 +67,22 @@ public function show($id)
                 ->paginate(10);
         
         return view('knn.riwayat', compact('riwayat'));
+    }
+    public function printPdf($id)
+    {
+        $dataUji = Uji::with(['pengajuan', 'riwayat' => function($query) {
+            $query->latest()->limit(1);
+        }])->findOrFail($id);
+
+        $neighbors = $dataUji->neighbors 
+                   ?? optional($dataUji->riwayat->first())->neighbors
+                   ?? [];
+
+        $pdf = Pdf::loadView('knn.pdf', compact('dataUji', 'neighbors'));
+        
+        return $pdf->stream('hasil-klasifikasi-'.$dataUji->id.'.pdf');
+        
+        // Atau untuk langsung download:
+        // return $pdf->download('hasil-klasifikasi-'.$dataUji->id.'.pdf');
     }
 }

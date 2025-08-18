@@ -8,6 +8,9 @@
                 <h4 class="mb-0">
                     <i class="fas fa-info-circle me-2"></i>Detail Klasifikasi
                 </h4>
+                <a href="{{ route('knn.pdf', $dataUji->id) }}" class="btn btn-danger" target="_blank">
+                    <i class="fas fa-file-pdf"></i> Cetak PDF
+                </a>
                 <a href="{{ route('knn.index') }}" class="btn btn-light">
                     <i class="fas fa-arrow-left me-1"></i> Kembali
                 </a>

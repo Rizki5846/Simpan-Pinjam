@@ -118,6 +118,7 @@ Route::prefix('knn')->group(function () {
     Route::get('/{id}', [KnnController::class, 'show'])->name('knn.show');
     Route::get('/{id}/classify', [KnnController::class, 'classify'])->name('knn.classify');
     Route::get('/knn/riwayat', [KnnController::class, 'riwayat'])->name('knn.riwayat');
+    Route::get('/knn/{id}/pdf', [KnnController::class, 'printPdf'])->name('knn.pdf');
     });
 
 // Route::controller(UjiController::class)->prefix('uji')->group(function () {
