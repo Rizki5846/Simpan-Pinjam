@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Anggota;
 use App\Models\Latih;
 use Illuminate\Http\Request;
+use App\Imports\AnggotaImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AnggotaController extends Controller
 {
@@ -25,7 +27,6 @@ class AnggotaController extends Controller
             'nik.required' => 'NIK wajib diisi',
             'nik.digits' => 'NIK harus terdiri dari 16 digit angka',
             'nik.unique' => 'NIK sudah terdaftar',
-            // Tambahkan pesan validasi lainnya sesuai kebutuhan
         ];
 
         $validated = $request->validate([
@@ -43,6 +44,7 @@ class AnggotaController extends Controller
 
         return redirect()->route('anggota.index')->with('success', 'Data berhasil disimpan');
     }
+
     public function convertToLatih($id, Request $request)
     {
         $request->validate(['status_kelayakan' => 'required|in:Layak,Tidak Layak']);
@@ -53,4 +55,30 @@ class AnggotaController extends Controller
         Latih::create($anggota->convertToLatih($request->status_kelayakan));
         return back()->with('success', 'Berhasil konversi ke data latih');
     }
+
+    // Method untuk menampilkan form import
+    public function showImportForm()
+    {
+        return view('anggota.import');
+    }
+
+    // Method untuk memproses import
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:2048'
+        ]);
+
+        try {
+            Excel::import(new AnggotaImport, $request->file('file'));
+            
+            return redirect()->route('anggota.index')
+                ->with('success', 'Data berhasil diimport');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error importing file: ' . $e->getMessage());
+        }
+    }
+
+    // Method untuk download template Excel
+
 }

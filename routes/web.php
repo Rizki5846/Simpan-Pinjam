@@ -121,6 +121,9 @@ Route::prefix('knn')->group(function () {
     Route::get('/knn/{id}/pdf', [KnnController::class, 'printPdf'])->name('knn.pdf');
     });
 
+    Route::get('/anggota/import', [AnggotaController::class, 'showImportForm'])->name('anggota.import.form');
+    Route::post('/anggota/import', [AnggotaController::class, 'import'])->name('anggota.import');
+    Route::get('/anggota/template', [AnggotaController::class, 'downloadTemplate'])->name('anggota.downloadTemplate');
 // Route::controller(UjiController::class)->prefix('uji')->group(function () {
 // 	Route::get('', 'index')->name('uji.index');
 // 	Route::get('create', 'create')->name('uji.create');

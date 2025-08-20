@@ -79,13 +79,13 @@
                             </td>
                             <td>
                                 <a href="{{ route('latih.edit', $item->id) }}" class="btn btn-sm btn-warning">
-                                    <i class="fas fa-edit"></i>
+                                    <i class="fas fa-edit">Edit</i>
                                 </a>
                                 <form action="{{ route('latih.destroy', $item->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Hapus data ini?')">
-                                        <i class="fas fa-trash"></i>
+                                        <i class="fas fa-trash">Hapus</i>
                                     </button>
                                 </form>
                             </td>

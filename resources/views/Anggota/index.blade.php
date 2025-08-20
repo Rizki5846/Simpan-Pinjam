@@ -4,6 +4,9 @@
 <div class="container">
     <h2>Daftar Anggota</h2>
     <a href="{{ route('anggota.create') }}" class="btn btn-primary mb-3">Tambah Anggota</a>
+    <a href="{{ route('anggota.import.form') }}" class="btn btn-success">
+    <i class="fas fa-file-import"></i> Import Excel
+</a>
 
     <table class="table table-bordered">
         <thead>
